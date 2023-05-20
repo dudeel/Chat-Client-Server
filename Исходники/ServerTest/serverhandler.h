@@ -3,7 +3,6 @@
 
 #include <QTcpServer>
 #include <QTcpSocket>
-#include <QVector>
 #include <QDataStream>
 
 #include <QFile>
@@ -17,7 +16,7 @@ class ServerHandler : public QTcpServer
 
 private:
     QTcpSocket* _socket;
-    QVector <QTcpSocket*> _sockets;
+    QList <QTcpSocket*> _sockets;
     QByteArray _data;
     QString _serverAdress;
     int _serverPort;
@@ -39,6 +38,7 @@ public slots:
     void socketReadyRead();
     void socketDisconnect();
     void sendToClient(QString message, bool isClient);
+    void sendToThisClient(QString message);
     void closeProgram();
 };
 

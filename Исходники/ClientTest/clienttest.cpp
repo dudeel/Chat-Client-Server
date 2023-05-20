@@ -12,6 +12,9 @@ ClientTest::ClientTest(QWidget *parent) :
     _socket = new QTcpSocket(this);
     connect(_socket, SIGNAL(readyRead()), this, SLOT(socketReadyRead()));
     connect(_socket, SIGNAL(disconnected()), this, SLOT(socketDisconnect()));
+    connect(_socket, SIGNAL(connected()), this, SLOT(socketIsConnected()));
+
+    _isConnect = false;
 }
 
 ClientTest::~ClientTest()
@@ -39,12 +42,25 @@ void ClientTest::on_ButtonConnectServer_clicked()
         if (port < 1000) _ui->ShowMessages->append("Необходимо ввести Порт (от 4-х символов)");
         else
         {
+            if (_isConnect) _socket->disconnectFromHost();
             _ui->ShowMessages->clear();
+
             //Подключение к серверу по указанным пользователем данным
             _socket->connectToHost(adress, port);
-            sendToServer("Hello, server!");
+
+            if (!_socket->waitForConnected(1000))
+            {
+                if(_socket->errorString() == "Connection refused") _ui->ShowMessages->append("Невозможно подключиться к серверу");
+                _isConnect = false;
+            }
         }
     }
+}
+
+void ClientTest::socketIsConnected()
+{
+    sendToServer("Hello, server!");
+    _isConnect = true;
 }
 
 void ClientTest::socketReadyRead()
@@ -66,15 +82,25 @@ void ClientTest::sendToServer(QString message)
 
 void ClientTest::socketDisconnect()
 {
-    _socket->deleteLater();
+    _socket->disconnectFromHost();
+    _isConnect = false;
+    _ui->ShowMessages->append("Сервер остановлен");
 }
 
 void ClientTest::on_sendMessage_clicked()
 {
-    sendToServer(_ui->inputMessage->text());
+    if (_isConnect)
+    {
+        _ui->ShowMessages->append(_ui->inputMessage->text());
+        sendToServer(_ui->inputMessage->text());
+    }
 }
 
 void ClientTest::on_inputMessage_returnPressed()
 {
-    sendToServer(_ui->inputMessage->text());
+    if (_isConnect)
+    {
+        _ui->ShowMessages->append(_ui->inputMessage->text());
+        sendToServer(_ui->inputMessage->text());
+    }
 }

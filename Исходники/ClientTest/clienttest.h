@@ -21,6 +21,7 @@ private:
     Ui::ClientTest* _ui;
     QTcpSocket* _socket;
     QByteArray _data;
+    bool _isConnect;
 
     void validationAdress();
     void sendToServer(QString message);
@@ -28,6 +29,7 @@ private:
 public slots:
     void socketReadyRead();
     void socketDisconnect();
+    void socketIsConnected();
 
 private slots:
     void on_ButtonConnectServer_clicked();

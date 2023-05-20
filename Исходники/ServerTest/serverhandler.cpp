@@ -7,7 +7,7 @@ void ServerHandler::startServer(int port)
 
     if (this->listen(QHostAddress::Any, port))
     {
-        //Для макета локальное подключение
+        //Для прототипа локальное подключение
         _serverAdress = "127.0.0.1";
         _serverPort = port;
         emit socketReadyReadSignal("Сервер запущен");
@@ -23,16 +23,17 @@ void ServerHandler::incomingConnection(qintptr socketID)
     _socket = new QTcpSocket(this);
     //Присваиваю уникальный номер сокету
     _socket->setSocketDescriptor(socketID);
+    qDebug() << "Номер сокета:" << socketID;
 
     connect(_socket, SIGNAL(readyRead()), this, SLOT(socketReadyRead()));
     connect(_socket, SIGNAL(disconnected()), this, SLOT(socketDisconnect()));
 
-    //Контейнер для взаимодействия с несколькими клиентами
-    _sockets.push_back(_socket);
+    //Контейнер сокетов
+    _sockets.prepend(_socket);
+    qDebug() << "Сокет" << socketID << "добавлен в контейнер";
 
     sendClientLog("Клиент подключился");
-
-    sendToClient("Hello, client!", false);
+    sendToThisClient("Hello, client!");
 }
 
 void ServerHandler::socketReadyRead()
@@ -42,7 +43,8 @@ void ServerHandler::socketReadyRead()
     QDataStream input(_socket);
     QString message;
     input >> message;
-    sendToClient(message, true);
+
+    sendClientLog(message);
     emit socketReadyReadSignal(message);
 }
 
@@ -51,19 +53,35 @@ void ServerHandler::sendToClient(QString message, bool isClient)
     _data.clear();
     QDataStream send(&_data, QIODevice::WriteOnly);
     send << message;
-    //emit sendMessageSignal();
 
+    //Для логов
     if (isClient) sendClientLog(message);
     else sendServerLog(message);
 
+    //Отправка сообщения всем сокетам из контейнера
     for (int i = 0; i < _sockets.size(); i++)
         _sockets[i]->write(_data);
+}
+
+void ServerHandler::sendToThisClient(QString message)
+{
+    _data.clear();
+    QDataStream send(&_data, QIODevice::WriteOnly);
+    send << message;
+
+    sendServerLog(message);
+    _socket->write(_data);
 }
 
 //Обработка отключение клиента
 void ServerHandler::socketDisconnect()
 {
     sendClientLog("Клиент отключился");
+
+    //Удаляю из контейнера отключившийся сокет
+    for (int i = 0; i < _sockets.size(); i++)
+        if (_sockets[i] == _socket) _sockets.removeAt(i);
+
     _socket -> deleteLater();
 }
 
