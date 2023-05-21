@@ -34,6 +34,9 @@
           <height>25</height>
          </size>
         </property>
+        <property name="text">
+         <string>127.0.0.1</string>
+        </property>
        </widget>
       </item>
       <item>
@@ -55,6 +58,9 @@
           <width>120</width>
           <height>25</height>
          </size>
+        </property>
+        <property name="text">
+         <string>2222</string>
         </property>
        </widget>
       </item>
@@ -126,6 +132,13 @@
        </widget>
       </item>
      </layout>
+    </item>
+    <item>
+     <widget class="QPushButton" name="sendImage">
+      <property name="text">
+       <string>Отправить изображение</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

@@ -8,13 +8,13 @@ ServerTest::ServerTest(QWidget *parent) :
     _ui->setupUi(this);
 
     _server = new ServerHandler();
-    connect(this, &ServerTest::startServerSignal, _server, &ServerHandler::startServer);
-    connect(this, &ServerTest::sendMessageSignal, _server, &ServerHandler::sendToClient);
-    connect(this, &ServerTest::closeProgramSignal, _server, &ServerHandler::closeProgram);
+    connect(this, SIGNAL(startServerSignal(int)), _server, SLOT(startServer(int)));
+    connect(this, SIGNAL(sendMessageSignal(QString,bool)), _server, SLOT(sendMessage(QString,bool)));
+    connect(this, SIGNAL(closeProgramSignal()), _server, SLOT(closeProgram()));
 
-    connect(_server, &ServerHandler::socketReadyReadSignal, this, &ServerTest::socketReadyRead);
-    connect(_server, &ServerHandler::sendMessageSignal, this, &ServerTest::sendToClient);
-    connect(_server, &ServerHandler::showMessage, this, &ServerTest::socketReadyRead);
+    connect(_server, SIGNAL(socketReadyReadSignal(QString)), this, SLOT(socketReadyRead(QString)));
+    connect(_server, SIGNAL(sendMessageSignal()), this, SLOT(sendToClient()));
+    connect(_server, SIGNAL(showMessage(QString)), this, SLOT(socketReadyRead(QString)));
 }
 
 ServerTest::~ServerTest()
@@ -36,9 +36,9 @@ void ServerTest::on_ButtonStartServer_clicked()
 {
     int port = _ui->inputPort->text().toInt();
 
-    //Добавил валидацию, скрипт принимает порт размером от 4-х символов
-    if (port > 1000) emit startServerSignal(port);
-    else qDebug() << "Write port!";
+    //Cкрипт принимает порт размером от 4-х символов
+    if (port < 1000) _ui->ShowMessages->append("Необходимо ввести Порт (от 4-х символов)");
+    else emit startServerSignal(port);
 }
 
 void ServerTest::on_sendMessage_clicked()

@@ -10,11 +10,14 @@ s
 SOURCES += \
         main.cpp \
         servertest.cpp \
-    serverhandler.cpp
+    serverhandler.cpp \
+    imageform.cpp
 
 HEADERS += \
         servertest.h \
-    serverhandler.h
+    serverhandler.h \
+    imageform.h
 
 FORMS += \
-        servertest.ui
+        servertest.ui \
+    imageform.ui

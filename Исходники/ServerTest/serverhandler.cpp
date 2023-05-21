@@ -29,26 +29,63 @@ void ServerHandler::incomingConnection(qintptr socketID)
     connect(_socket, SIGNAL(disconnected()), this, SLOT(socketDisconnect()));
 
     //Контейнер сокетов
-    _sockets.prepend(_socket);
+    _sockets.push_back(_socket);
     qDebug() << "Сокет" << socketID << "добавлен в контейнер";
 
     sendClientLog("Клиент подключился");
-    sendToThisClient("Hello, client!");
+    sendMessage("Hello, client!");
 }
 
 void ServerHandler::socketReadyRead()
 {
     _socket = (QTcpSocket*)sender();
-
-    QDataStream input(_socket);
     QString message;
-    input >> message;
 
-    sendClientLog(message);
-    emit socketReadyReadSignal(message);
+    if(_packetSize == 0)
+    {
+        _stream = new QDataStream(_socket);
+        if((quint64)_socket->bytesAvailable() < sizeof(quint32))
+            return;
+
+        *_stream >> message >> _packetSize;
+        free(_stream);
+    }
+
+    if(_packetSize > _socket->bytesAvailable())
+        return;
+
+    _arrayOfData = new QByteArray();
+    *_arrayOfData = _socket->read(_packetSize);
+
+    if (message == "") showImage();
+    else
+    {
+        sendClientLog(message);
+        emit socketReadyReadSignal(message);
+    }
+
+    _packetSize = 0;
 }
 
-void ServerHandler::sendToClient(QString message, bool isClient)
+void ServerHandler::showImage()
+{
+    qDebug() << "_packetSize = " << _packetSize;
+
+    QImage _image;
+    QBuffer buffer(_arrayOfData);
+    buffer.open(QIODevice::ReadOnly);
+    QImageReader _imageReader(&buffer, "PNG");
+    _image = _imageReader.read();
+
+    _imageForm = new ImageForm;
+    connect(this, SIGNAL(invokeImageFrame(QImage)), _imageForm, SLOT(openImageFrame(QImage)));
+
+    _imageForm->show();
+    emit invokeImageFrame(_image);
+    sendClientLog("Отправил изображение");
+}
+
+void ServerHandler::sendMessage(QString message, bool isClient)
 {
     _data.clear();
     QDataStream send(&_data, QIODevice::WriteOnly);
@@ -63,7 +100,7 @@ void ServerHandler::sendToClient(QString message, bool isClient)
         _sockets[i]->write(_data);
 }
 
-void ServerHandler::sendToThisClient(QString message)
+void ServerHandler::sendMessage(QString message)
 {
     _data.clear();
     QDataStream send(&_data, QIODevice::WriteOnly);
@@ -76,13 +113,11 @@ void ServerHandler::sendToThisClient(QString message)
 //Обработка отключение клиента
 void ServerHandler::socketDisconnect()
 {
+    _socket = (QTcpSocket*)sender();
     sendClientLog("Клиент отключился");
-
-    //Удаляю из контейнера отключившийся сокет
+    _sockets.removeAll(_socket);
     for (int i = 0; i < _sockets.size(); i++)
-        if (_sockets[i] == _socket) _sockets.removeAt(i);
-
-    _socket -> deleteLater();
+        qDebug() << _sockets[i]->peerAddress() << _sockets[i]->peerPort();
 }
 
 //Отправляю лог от имени сервера
@@ -104,7 +139,7 @@ void ServerHandler::sendClientLog(QString text)
     writeLogFile(currentLog);
 }
 
-//Получаю нужнйы формат адреса клиента
+//Получаю нужный формат адреса клиента
 QString ServerHandler::adressFormated()
 {
     QString adress = _socket->peerAddress().toString();
@@ -118,9 +153,9 @@ QString ServerHandler::adressFormated()
 
 void ServerHandler::openLogFile()
 {
-    file.setFileName("log.txt");
+    _file.setFileName("log.txt");
 
-    if (!file.open(QIODevice::Append | QIODevice::Text))
+    if (!_file.open(QIODevice::Append | QIODevice::Text))
     {
         qDebug() << "Неудается обратиться к файлу";
         return;
@@ -129,7 +164,7 @@ void ServerHandler::openLogFile()
 
 void ServerHandler::writeLogFile(QString text)
 {
-    QTextStream writeFile(&file);
+    QTextStream writeFile(&_file);
     writeFile << text << "\n";
 }
 
@@ -137,6 +172,7 @@ void ServerHandler::closeProgram()
 {
     sendServerLog("Сервер остановлен");
     qDebug() << "Сервер остановлен";
-    file.flush();
-    file.close();
+    _file.flush();
+    _file.close();
 }
+

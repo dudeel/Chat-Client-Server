@@ -50,7 +50,16 @@ void ClientTest::on_ButtonConnectServer_clicked()
 
             if (!_socket->waitForConnected(1000))
             {
-                if(_socket->errorString() == "Connection refused") _ui->ShowMessages->append("Невозможно подключиться к серверу");
+                //Обработка ошибок подключения
+                if (_socket->errorString() == "Connection refused")
+                    _ui->ShowMessages->append("Невозможно подключиться к серверу");
+                else if (_socket->errorString() == "Network unreachable")
+                    _ui->ShowMessages->append("Сеть недоступна");
+                else if (_socket->errorString() == "Socket operation timed out")
+                    _ui->ShowMessages->append("Превышено время ожидания");
+                else
+                    _ui->ShowMessages->append(_socket->errorString());
+
                 _isConnect = false;
             }
         }
@@ -61,6 +70,7 @@ void ClientTest::socketIsConnected()
 {
     sendToServer("Hello, server!");
     _isConnect = true;
+    qDebug() << "send";
 }
 
 void ClientTest::socketReadyRead()
@@ -76,6 +86,7 @@ void ClientTest::sendToServer(QString message)
     _data.clear();
     QDataStream send(&_data, QIODevice::WriteOnly);
     send << message;
+    qDebug() << message;
     _socket->write(_data);
     _ui->inputMessage->clear();
 }
@@ -89,7 +100,7 @@ void ClientTest::socketDisconnect()
 
 void ClientTest::on_sendMessage_clicked()
 {
-    if (_isConnect)
+    if (_isConnect && _ui->inputMessage->text().length() >= 1)
     {
         _ui->ShowMessages->append(_ui->inputMessage->text());
         sendToServer(_ui->inputMessage->text());
@@ -98,9 +109,52 @@ void ClientTest::on_sendMessage_clicked()
 
 void ClientTest::on_inputMessage_returnPressed()
 {
-    if (_isConnect)
+    if (_isConnect && _ui->inputMessage->text().length() >= 1)
     {
         _ui->ShowMessages->append(_ui->inputMessage->text());
         sendToServer(_ui->inputMessage->text());
     }
+}
+
+void ClientTest::on_sendImage_clicked()
+{
+    if (!_isConnect) return;
+
+    if (_imageDirection == nullptr)
+        _imageDirection = new QString();
+
+    *_imageDirection = QFileDialog::getOpenFileName(this, "Выбор изображения", "", "PNG (*.png);; JPG (*.jpg)");
+
+    if (*_imageDirection != "")
+    {
+        _image = new QImage(*_imageDirection);
+
+        if (!_image->isNull())
+        {
+            sendImage();
+        }
+    }
+}
+
+void ClientTest::sendImage()
+{
+    _buffer = new QBuffer(this);
+    _byteArray = new QByteArray();
+
+    _imageWriter = new QImageWriter(_buffer, "PNG");
+    _imageWriter->write(*_image);
+
+    _data.clear();
+    QDataStream send(_byteArray,QIODevice::WriteOnly);
+    QString message = "";
+    send << message <<(quint32)_buffer->data().size();
+
+    _byteArray->append(_buffer->data());
+    _socket->write(*_byteArray);
+    _socket->waitForBytesWritten(3000);
+
+    free(_byteArray);
+    free(_imageWriter);
+
+    return;
 }
