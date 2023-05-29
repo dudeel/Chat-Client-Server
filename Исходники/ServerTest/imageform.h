@@ -19,9 +19,6 @@ public:
 private:
     Ui::ImageForm* _ui;
     QImage _currentImage;
-    int _width;
-    int _height;
-
 
 public slots:
     void openImageFrame(QImage _image);

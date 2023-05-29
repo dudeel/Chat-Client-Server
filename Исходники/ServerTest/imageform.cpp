@@ -17,9 +17,6 @@ ImageForm::~ImageForm()
 
 void ImageForm::openImageFrame(QImage _image)
 {
-    _width = _ui->imagePreview->width();
-    _height = _ui->imagePreview->height();
-
     _currentImage = _image;
 
     _ui->imagePreview->setPixmap( QPixmap::fromImage(_currentImage) );

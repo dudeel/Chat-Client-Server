@@ -125,7 +125,7 @@ void ServerHandler::sendServerLog(QString text)
 {
     QString dateTime = QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss");
     QString currentAdress = _serverAdress + ":" + QString::number(_serverPort);
-    QString currentLog = dateTime + " | " + currentAdress +  " | " + text;
+    QString currentLog = dateTime + "\t| " + currentAdress +  "\t| " + text;
     qDebug() << currentLog;
     writeLogFile(currentLog);
 }
@@ -134,7 +134,7 @@ void ServerHandler::sendServerLog(QString text)
 void ServerHandler::sendClientLog(QString text)
 {
     QString dateTime = QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss");
-    QString currentLog = dateTime + " | " + adressFormated() +  " | " + text;
+    QString currentLog = dateTime + "\t| " + adressFormated() +  "\t| " + text;
     qDebug() << currentLog;
     writeLogFile(currentLog);
 }
