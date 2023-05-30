@@ -70,7 +70,6 @@ void ClientTest::socketIsConnected()
 {
     sendToServer("Hello, server!");
     _isConnect = true;
-    qDebug() << "send";
 }
 
 void ClientTest::socketReadyRead()
@@ -86,7 +85,6 @@ void ClientTest::sendToServer(QString message)
     _data.clear();
     QDataStream send(&_data, QIODevice::WriteOnly);
     send << message;
-    qDebug() << message;
     _socket->write(_data);
     _ui->inputMessage->clear();
 }
@@ -99,15 +97,12 @@ void ClientTest::socketDisconnect()
 }
 
 void ClientTest::on_sendMessage_clicked()
-{
-    if (_isConnect && _ui->inputMessage->text().length() >= 1)
-    {
-        _ui->ShowMessages->append(_ui->inputMessage->text());
-        sendToServer(_ui->inputMessage->text());
-    }
-}
+{ SendMessage(); }
 
 void ClientTest::on_inputMessage_returnPressed()
+{ SendMessage(); }
+
+void ClientTest::SendMessage()
 {
     if (_isConnect && _ui->inputMessage->text().length() >= 1)
     {
@@ -120,41 +115,33 @@ void ClientTest::on_sendImage_clicked()
 {
     if (!_isConnect) return;
 
-    if (_imageDirection == nullptr)
-        _imageDirection = new QString();
+    QString _imageDirection;
+    _imageDirection = QFileDialog::getOpenFileName(this, "Выбор изображения", "", "IMAGE (*.png *.jpg);; PNG (*.png);; JPG (*.jpg)");
 
-    *_imageDirection = QFileDialog::getOpenFileName(this, "Выбор изображения", "", "PNG (*.png);; JPG (*.jpg)");
-
-    if (*_imageDirection != "")
+    if (_imageDirection != "")
     {
-        _image = new QImage(*_imageDirection);
-
+        _image = std::shared_ptr<QImage> (new QImage(_imageDirection));
         if (!_image->isNull())
-        {
             sendImage();
-        }
     }
 }
 
 void ClientTest::sendImage()
 {
-    _buffer = new QBuffer(this);
-    _byteArray = new QByteArray();
+    _buffer = std::shared_ptr<QBuffer>(new QBuffer(this));
+    _byteArray = std::shared_ptr<QByteArray>(new QByteArray());
 
-    _imageWriter = new QImageWriter(_buffer, "PNG");
+    _imageWriter = std::shared_ptr<QImageWriter>(new QImageWriter(_buffer.get(), "PNG"));
     _imageWriter->write(*_image);
 
     _data.clear();
-    QDataStream send(_byteArray,QIODevice::WriteOnly);
+    QDataStream send(_byteArray.get(), QIODevice::WriteOnly);
     QString message = "";
     send << message <<(quint32)_buffer->data().size();
 
     _byteArray->append(_buffer->data());
     _socket->write(*_byteArray);
     _socket->waitForBytesWritten(3000);
-
-    free(_byteArray);
-    free(_imageWriter);
 
     return;
 }

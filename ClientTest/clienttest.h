@@ -11,6 +11,8 @@
 #include <QByteArray>
 #include <QImageWriter>
 
+#include <shared_mutex>
+
 namespace Ui {
 class ClientTest;
 }
@@ -30,14 +32,14 @@ private:
     bool _isConnect;
     void validationAdress();
     void sendToServer(QString message);
+    void SendMessage();
 
     bool _isMessage;
-    QString* _imageDirection;
-    QBuffer* _buffer;
-    QByteArray* _byteArray;
-    QImage* _image;
-    QPixmap* _pixmap;
-    QImageWriter* _imageWriter;
+    std::shared_ptr<QBuffer> _buffer;
+    std::shared_ptr<QByteArray> _byteArray;
+    std::shared_ptr<QImage> _image;
+    std::shared_ptr<QPixmap> _pixmap;
+    std::shared_ptr<QImageWriter> _imageWriter;
     void sendImage();
 
 public slots:

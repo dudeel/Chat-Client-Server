@@ -43,12 +43,11 @@ void ServerHandler::socketReadyRead()
 
     if(_packetSize == 0)
     {
-        _stream = new QDataStream(_socket);
+        _stream = std::shared_ptr<QDataStream>(new QDataStream(_socket));
         if((quint64)_socket->bytesAvailable() < sizeof(quint32))
             return;
 
         *_stream >> message >> _packetSize;
-        free(_stream);
     }
 
     if(_packetSize > _socket->bytesAvailable())
@@ -77,11 +76,10 @@ void ServerHandler::showImage()
     QImageReader _imageReader(&buffer, "PNG");
     _image = _imageReader.read();
 
-    _imageForm = new ImageForm;
-    connect(this, SIGNAL(invokeImageFrame(QImage)), _imageForm, SLOT(openImageFrame(QImage)));
-
+    _imageForm = new ImageForm();
+    _imageForm->openImageFrame(_image);
     _imageForm->show();
-    emit invokeImageFrame(_image);
+
     sendClientLog("Отправил изображение");
 }
 

@@ -15,13 +15,14 @@ class ImageForm : public QWidget
 public:
     explicit ImageForm(QWidget* parent = 0);
     ~ImageForm();
+    void openImageFrame(QImage _image);
 
 private:
     Ui::ImageForm* _ui;
     QImage _currentImage;
+    void changeSize(int width, int height);
 
 public slots:
-    void openImageFrame(QImage _image);
     void resizeEvent(QResizeEvent* event);
 };
 

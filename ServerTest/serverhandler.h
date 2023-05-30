@@ -14,6 +14,8 @@
 #include <QImageReader>
 #include <QBuffer>
 
+#include <shared_mutex>
+
 
 class ServerHandler : public QTcpServer
 {
@@ -34,8 +36,8 @@ private:
     QFile _file;
     ImageForm* _imageForm;
     quint32 _packetSize;
-    QDataStream *_stream;
-    QByteArray *_arrayOfData;
+    std::shared_ptr<QDataStream> _stream;
+    QByteArray* _arrayOfData;
     void showImage();
 
 signals:

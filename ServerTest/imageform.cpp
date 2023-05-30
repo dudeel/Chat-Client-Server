@@ -18,21 +18,19 @@ ImageForm::~ImageForm()
 void ImageForm::openImageFrame(QImage _image)
 {
     _currentImage = _image;
-
     _ui->imagePreview->setPixmap( QPixmap::fromImage(_currentImage) );
 
-    if( !_currentImage.isNull() )
-    {
-        _ui->imagePreview->setPixmap(QPixmap::fromImage(_currentImage).scaled(500, 600, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        _ui->imagePreview->resize(500, 600);
-    }
+    changeSize(500, 600);
 }
 
 void ImageForm::resizeEvent(QResizeEvent* event)
+{ changeSize(event->size().width() , event->size().height()); }
+
+void ImageForm::changeSize(int width, int height)
 {
     if( !_currentImage.isNull() )
     {
-        _ui->imagePreview->setPixmap(QPixmap::fromImage(_currentImage).scaled(event->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        _ui->imagePreview->resize(event->size());
+        _ui->imagePreview->setPixmap(QPixmap::fromImage(_currentImage).scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        _ui->imagePreview->resize(width, height);
     }
 }
